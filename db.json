@@ -1,0 +1,79 @@
+{
+  "allocation": [
+    {
+      "id": "1",
+      "courseId": "1",
+      "end_hour": "1",
+      "start_hour": "1",
+      "professorId": "1",
+      "day": "monday"
+    }
+  ],
+  "courses": [
+    {
+      "id": "1",
+      "name": "Frontend"
+    },
+    {
+      "id": "1",
+      "name": "Frontend"
+    },
+    {
+      "id": "1",
+      "name": "Frontend"
+    }
+  ],
+  "departments": [
+    {
+      "id": "1",
+      "name": "ciencia"
+    },
+    {
+      "id": "2",
+      "name": "portugues"
+    },
+    {
+      "id": "3",
+      "name": "aleao"
+    },
+    {
+      "id": "4",
+      "name": "ciencias"
+    },
+    {
+      "id": "5",
+      "name": "arabe"
+    },
+    {
+      "id": "4d8f",
+      "name": "teste"
+    },
+    {
+      "id": "82bd",
+      "name": "quimica e ciencia asasa s a s a sa s a s as a s a s as a s a s as as s a s a sasasasasasas"
+    },
+    {
+      "id": "39ed",
+      "name": "teste"
+    },
+    {
+      "id": "a9aa",
+      "name": "tesr"
+    },
+    {
+      "id": "5eae",
+      "name": "teste"
+    },
+    {
+      "id": "d43c",
+      "name": "teste"
+    }
+  ],
+  "professors": [
+    {
+      "id": "1",
+      "name": "Keven",
+      "cpf": "111.111.111-33"
+    }
+  ]
+}
