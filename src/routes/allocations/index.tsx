@@ -49,7 +49,11 @@ function RouteComponent() {
   const fetchAllocations = () => {
     fetch('http://localhost:8080/allocations')
       .then((response) => response.json())
-      .then((result) => setAllocations(Array.isArray(result) ? result : []))
+      .then((result) => {
+        // Ordena as alocações pela ID de forma crescente
+        const sortedAllocations = result.sort((a, b) => a.id - b.id)
+        setAllocations(sortedAllocations)
+      })
       .catch((error) => console.error('Erro ao buscar alocações:', error))
   }
 
@@ -73,10 +77,10 @@ function RouteComponent() {
   return (
     <>
       <Page
-        title="Allocations"
+        title="Quadro de Horários"
         rightElement={
           <Button as={Link} to="/allocations/new" colorScheme="blue">
-            Add Allocation
+            Adicionar Alocação
           </Button>
         }
       >
@@ -85,17 +89,17 @@ function RouteComponent() {
             { label: 'ID', name: 'id' },
             { label: 'Day', name: 'day' },
             {
-              label: 'Start Hour',
+              label: 'Início',
               name: 'start',
               render: (value: string) => formatTime(value),
             },
             {
-              label: 'End Hour',
+              label: 'Fim',
               name: 'end',
               render: (value: string) => formatTime(value),
             },
             {
-              label: 'Course',
+              label: 'Curso',
               name: 'course',
               render: (_: any, row: Allocation) => row.course?.name || 'N/A',
             },
