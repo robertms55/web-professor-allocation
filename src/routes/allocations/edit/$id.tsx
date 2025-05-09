@@ -186,12 +186,14 @@ function RouteComponent() {
               </Select>
             </FormControl>
 
-            <Box textAlign="center" mt={4}>
+   
               <Button type="submit" colorScheme="blue">
-                Salvar Alterações
+                Salvar
               </Button>
-            </Box>
-
+         
+  <Button variant="outline" onClick={() => navigate({ to: '/allocations' })}>
+            Voltar
+          </Button>
           </VStack>
         </form>
       )}

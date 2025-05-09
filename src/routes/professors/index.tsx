@@ -10,7 +10,6 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
-  HStack,
   useToast,
 } from '@chakra-ui/react'
 import { FiTrash2, FiEdit } from 'react-icons/fi'
@@ -25,6 +24,19 @@ type Professor = {
   id: number
   cpf: string
   name: string
+  department: {
+    id: number
+    name: string
+  }
+}
+
+// Função simples para formatar CPF
+function formatCPF(cpf: string) {
+  cpf = cpf.replace(/\D/g, '')
+  if (cpf.length === 11) {
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+  }
+  return cpf
 }
 
 function RouteComponent() {
@@ -43,7 +55,7 @@ function RouteComponent() {
     fetch('http://localhost:8080/professors')
       .then((response) => response.json())
       .then((result) => {
-        const sortedProfessors = result.sort((a, b) => a.id - b.id)
+        const sortedProfessors = result.sort((a: Professor, b: Professor) => a.id - b.id)
         setProfessors(sortedProfessors)
       })
       .catch((error) => console.error('Erro ao buscar professores:', error))
@@ -57,19 +69,41 @@ function RouteComponent() {
   const confirmDelete = () => {
     if (selectedId === null) return
     fetch(`http://localhost:8080/professors/${selectedId}`, { method: 'DELETE' })
-      .then(() => {
-        fetchProfessors()
+      .then((response) => {
+        if (response.ok) {
+          fetchProfessors()
+          toast({
+            title: 'Professor excluído!',
+            description: 'O professor foi removido com sucesso.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        } else {
+          toast({
+            title: 'Erro ao excluir professor!',
+            description: 'Não é possível excluir um professor em uso!',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        }
         onClose()
+      })
+      .catch((error) => {
+        console.error('Erro ao deletar professor:', error)
         toast({
-          title: 'Professor excluído!',
-          description: 'O professor foi removido com sucesso.',
+          title: 'Erro ao excluir professor!',
+          description: 'Ocorreu um erro inesperado. Tente novamente.',
           status: 'error',
-          duration: 1000,
+          duration: 3000,
           isClosable: true,
           position: 'top-right',
         })
+        onClose()
       })
-      .catch((error) => console.error('Erro ao deletar professor:', error))
   }
 
   return (
@@ -85,8 +119,17 @@ function RouteComponent() {
         <Table
           columns={[
             { label: 'ID', name: 'id' },
-            { label: 'CPF', name: 'cpf' },
+            { 
+              label: 'CPF', 
+              name: 'cpf', 
+              render: (_: any, row: Professor) => formatCPF(row.cpf) 
+            },
             { label: 'Nome', name: 'name' },
+            { 
+              label: 'Departamento', 
+              name: 'department',
+              render: (_: any, row: Professor) => row.department?.name || 'Sem Departamento'
+            },
             {
               label: 'Ações',
               name: 'options',
@@ -141,3 +184,5 @@ function RouteComponent() {
     </>
   )
 }
+
+export default RouteComponent

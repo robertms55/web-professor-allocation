@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Heading } from '@chakra-ui/react'
-import Hero from '@/components/hero'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { Box, Heading, Text, Stack, Button, Image, Container } from '@chakra-ui/react'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -8,15 +7,40 @@ export const Route = createFileRoute('/')({
 
 function App() {
   return (
-    <div className="App">
-      <Hero
-        description="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum"
-        imageURL="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=1064&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        subtitle="Use everywhere"
-        title="Allocation"
-      >
-        <Heading>Test...</Heading>
-      </Hero>
-    </div>
+    <Box bg="white" minH="100vh" py={20}>
+      <Container maxW="6xl">
+        <Stack direction={{ base: 'column', md: 'row' }} spacing={10} align="center">
+          {/* Texto */}
+          <Box flex="1">
+            <Text color="blue.600" fontWeight="bold" mb={2}>
+              Gestão Acadêmica Simplificada
+            </Text>
+            <Heading as="h1" size="2xl" mb={6} color="gray.800">
+              Prof Allocation
+            </Heading>
+            <Text fontSize="lg" color="gray.600" mb={6}>
+              O Prof Allocation é uma solução integrada para a gestão acadêmica, 
+              permitindo o cadastro e gerenciamento de cursos, departamentos, 
+              professores e a alocação docente de forma eficiente e transparente.
+            </Text>
+
+            {/* Botão que redireciona para /allocations */}
+            <Button as={Link} to="/allocations" colorScheme="blue" size="lg">
+              Comece Agora
+            </Button>
+          </Box>
+
+          {/* Imagem */}
+          <Box flex="1">
+            <Image
+              src="https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=1064&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+              alt="Prof Allocation"
+              borderRadius="xl"
+              shadow="md"
+            />
+          </Box>
+        </Stack>
+      </Container>
+    </Box>
   )
 }

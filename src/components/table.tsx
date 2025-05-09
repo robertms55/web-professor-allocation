@@ -62,7 +62,7 @@ export default function Table({ columns, items }: TableProps) {
                     textAlign={column.name === 'options' ? 'right' : 'left'}
                   >
                     {column.render
-                      ? column.render(value, item) // ✅ Agora passa o `row` corretamente
+                      ? column.render(value, item) 
                       : column.name === 'start_hour' || column.name === 'end_hour'
                       ? formatTime(value)
                       : value ?? 'N/A'}

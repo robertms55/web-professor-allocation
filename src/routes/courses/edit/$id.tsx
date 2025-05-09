@@ -44,7 +44,7 @@ function RouteComponent() {
             throw new Error('Erro ao salvar curso')
           }
 
-          // Mostra popup de sucesso ✅
+        
           toast({
             title: 'Curso atualizado!',
             description: 'O curso foi alterado com sucesso.',
@@ -90,6 +90,9 @@ function RouteComponent() {
           <Button type="submit" colorScheme="blue">
             Salvar
           </Button>
+          <Button variant="outline" onClick={() => navigate({ to: '/courses' })}>
+                      Voltar
+                    </Button>
         </Stack>
       </form>
     </Page>

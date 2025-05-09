@@ -56,19 +56,41 @@ function RouteComponent() {
   const confirmDelete = () => {
     if (selectedId === null) return
     fetch(`http://localhost:8080/departments/${selectedId}`, { method: 'DELETE' })
-      .then(() => {
-        fetchDepartments()
+      .then((response) => {
+        if (response.ok) {
+          fetchDepartments()
+          toast({
+            title: 'Departamento excluído!',
+            description: 'O departamento foi removido com sucesso.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        } else {
+          toast({
+            title: 'Erro ao excluir departamento!',
+            description: 'Não é possível excluir um departamento em uso!',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        }
         onClose()
+      })
+      .catch((error) => {
+        console.error('Erro ao deletar departamento:', error)
         toast({
-          title: 'Departamento excluído!',
-          description: 'O departamento foi removido com sucesso.',
+          title: 'Erro ao excluir departamento!',
+          description: 'Ocorreu um erro inesperado. Tente novamente.',
           status: 'error',
-          duration: 1000,
+          duration: 3000,
           isClosable: true,
           position: 'top-right',
         })
+        onClose()
       })
-      .catch((error) => console.error('Erro ao deletar departamento:', error))
   }
 
   return (
@@ -140,3 +162,5 @@ function RouteComponent() {
     </>
   )
 }
+
+export default RouteComponent

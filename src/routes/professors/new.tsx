@@ -7,17 +7,25 @@ export const Route = createFileRoute('/professors/new')({
   component: RouteComponent,
 })
 
+// Função para formatar CPF
+function formatCPF(value: string) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+}
+
 function RouteComponent() {
   const [name, setName] = useState('')
   const [cpf, setCpf] = useState('')
-  const [departmentId, setDepartmentId] = useState<number | string>('') // Inicialmente vazio
-  const [departments, setDepartments] = useState<any[]>([]) // Estado para armazenar os departamentos
+  const [departmentId, setDepartmentId] = useState<number | string>('')
+  const [departments, setDepartments] = useState<any[]>([])
   const navigate = useNavigate()
   const toast = useToast()
 
-  // Função para buscar os departamentos disponíveis
   useEffect(() => {
-    fetch('http://localhost:8080/departments') // Alterar para a URL da sua API de departamentos
+    fetch('http://localhost:8080/departments')
       .then((response) => response.json())
       .then((data) => setDepartments(data))
       .catch((error) => console.error('Erro ao buscar departamentos:', error))
@@ -39,8 +47,8 @@ function RouteComponent() {
 
     const professorData = {
       name,
-      cpf,
-      departmentId: parseInt(departmentId.toString()), // Garantir que o ID seja numérico
+      cpf: cpf.replace(/\D/g, ''), // Envia só os números
+      departmentId: parseInt(departmentId.toString()),
     }
 
     fetch('http://localhost:8080/professors', {
@@ -48,22 +56,34 @@ function RouteComponent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(professorData),
     })
-      .then(() => {
-        toast({
-          title: 'Professor cadastrado!',
-          description: 'O novo professor foi adicionado com sucesso.',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-          position: 'top-right',
-        })
-        navigate({ to: '/professors' })
+      .then((response) => {
+        if (response.ok) {
+          toast({
+            title: 'Professor cadastrado!',
+            description: 'O novo professor foi adicionado com sucesso.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+          navigate({ to: '/professors' })
+        } else {
+          // Erro conhecido, como CPF duplicado
+          toast({
+            title: 'Erro ao cadastrar professor!',
+            description: 'O CPF informado já está em uso.',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        }
       })
       .catch((error) => {
         console.error('Erro ao adicionar professor:', error)
         toast({
           title: 'Erro!',
-          description: 'Não foi possível adicionar o professor.',
+          description: 'Não foi possível adicionar o professor. Tente novamente.',
           status: 'error',
           duration: 3000,
           isClosable: true,
@@ -88,8 +108,9 @@ function RouteComponent() {
             <FormLabel>CPF do Professor</FormLabel>
             <Input
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
-              placeholder="Digite o CPF"
+              onChange={(e) => setCpf(formatCPF(e.target.value))}
+              maxLength={14}
+              placeholder="000.000.000-00"
             />
           </FormControl>
           <FormControl isRequired>
@@ -117,3 +138,5 @@ function RouteComponent() {
     </Page>
   )
 }
+
+export default RouteComponent

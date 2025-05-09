@@ -7,6 +7,15 @@ export const Route = createFileRoute('/professors/edit/$id')({
   component: RouteComponent,
 })
 
+// Função para formatar CPF
+function formatCPF(value: string) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+}
+
 function RouteComponent() {
   const { id } = useParams({ from: '/professors/edit/$id' })
   const [professor, setProfessor] = useState<any | null>(null)
@@ -24,9 +33,7 @@ function RouteComponent() {
   const fetchProfessor = (professorId: string) => {
     fetch(`http://localhost:8080/professors/${professorId}`)
       .then((response) => {
-        if (!response.ok) {
-          throw new Error('Erro ao buscar professor')
-        }
+        if (!response.ok) throw new Error('Erro ao buscar professor')
         return response.json()
       })
       .then((result) => setProfessor(result))
@@ -43,16 +50,17 @@ function RouteComponent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (professor) {
+      const dataToSend = {
+        ...professor,
+        cpf: professor.cpf.replace(/\D/g, ''), // Envia só números
+      }
       fetch(`http://localhost:8080/professors/${professor.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(professor),
+        body: JSON.stringify(dataToSend),
       })
         .then((response) => {
-          if (!response.ok) {
-            throw new Error('Erro ao salvar professor')
-          }
-
+          if (!response.ok) throw new Error('Erro ao salvar professor')
           toast({
             title: 'Professor atualizado!',
             description: 'O professor foi alterado com sucesso.',
@@ -61,10 +69,7 @@ function RouteComponent() {
             isClosable: true,
             position: 'top-right',
           })
-
-          setTimeout(() => {
-            navigate({ to: '/professors' })
-          }, 100)
+          setTimeout(() => navigate({ to: '/professors' }), 100)
         })
         .catch((error) => console.error('Erro ao editar professor:', error))
     }
@@ -72,12 +77,10 @@ function RouteComponent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setProfessor((prev: any) => ({ ...prev, [name]: value }))
+    setProfessor((prev: any) => ({ ...prev, [name]: name === 'cpf' ? formatCPF(value) : value }))
   }
 
-  if (!professor) {
-    return <div>Carregando...</div>
-  }
+  if (!professor) return <div>Carregando...</div>
 
   return (
     <Page title="Editar Professor" rightElement={null}>
@@ -90,6 +93,7 @@ function RouteComponent() {
               name="cpf"
               value={professor.cpf}
               onChange={handleInputChange}
+              maxLength={14}
               required
             />
           </FormControl>
@@ -126,8 +130,13 @@ function RouteComponent() {
           <Button type="submit" colorScheme="blue">
             Salvar
           </Button>
+            <Button variant="outline" onClick={() => navigate({ to: '/professors' })}>
+            Voltar
+          </Button>
         </Stack>
       </form>
     </Page>
   )
 }
+
+export default RouteComponent

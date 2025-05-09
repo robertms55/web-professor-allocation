@@ -88,6 +88,9 @@ function RouteComponent() {
           <Button type="submit" colorScheme="blue">
             Salvar
           </Button>
+          <Button variant="outline" onClick={() => navigate({ to: '/departments' })}>
+            Voltar
+          </Button>
         </Stack>
       </form>
     </Page>

@@ -18,7 +18,6 @@ import { Route as CoursesIndexImport } from './routes/courses/index'
 import { Route as AllocationsIndexImport } from './routes/allocations/index'
 import { Route as ProfessorsNewImport } from './routes/professors/new'
 import { Route as DepartmentsNewImport } from './routes/departments/new'
-import { Route as DepartmentsEditImport } from './routes/departments/edit'
 import { Route as CoursesNewImport } from './routes/courses/new'
 import { Route as AllocationsNewImport } from './routes/allocations/new'
 import { Route as ProfessorsEditIdImport } from './routes/professors/edit/$id'
@@ -70,12 +69,6 @@ const DepartmentsNewRoute = DepartmentsNewImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const DepartmentsEditRoute = DepartmentsEditImport.update({
-  id: '/departments/edit',
-  path: '/departments/edit',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const CoursesNewRoute = CoursesNewImport.update({
   id: '/courses/new',
   path: '/courses/new',
@@ -95,9 +88,9 @@ const ProfessorsEditIdRoute = ProfessorsEditIdImport.update({
 } as any)
 
 const DepartmentsEditIdRoute = DepartmentsEditIdImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => DepartmentsEditRoute,
+  id: '/departments/edit/$id',
+  path: '/departments/edit/$id',
+  getParentRoute: () => rootRoute,
 } as any)
 
 const CoursesEditIdRoute = CoursesEditIdImport.update({
@@ -135,13 +128,6 @@ declare module '@tanstack/react-router' {
       path: '/courses/new'
       fullPath: '/courses/new'
       preLoaderRoute: typeof CoursesNewImport
-      parentRoute: typeof rootRoute
-    }
-    '/departments/edit': {
-      id: '/departments/edit'
-      path: '/departments/edit'
-      fullPath: '/departments/edit'
-      preLoaderRoute: typeof DepartmentsEditImport
       parentRoute: typeof rootRoute
     }
     '/departments/new': {
@@ -202,10 +188,10 @@ declare module '@tanstack/react-router' {
     }
     '/departments/edit/$id': {
       id: '/departments/edit/$id'
-      path: '/$id'
+      path: '/departments/edit/$id'
       fullPath: '/departments/edit/$id'
       preLoaderRoute: typeof DepartmentsEditIdImport
-      parentRoute: typeof DepartmentsEditImport
+      parentRoute: typeof rootRoute
     }
     '/professors/edit/$id': {
       id: '/professors/edit/$id'
@@ -219,23 +205,10 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
-interface DepartmentsEditRouteChildren {
-  DepartmentsEditIdRoute: typeof DepartmentsEditIdRoute
-}
-
-const DepartmentsEditRouteChildren: DepartmentsEditRouteChildren = {
-  DepartmentsEditIdRoute: DepartmentsEditIdRoute,
-}
-
-const DepartmentsEditRouteWithChildren = DepartmentsEditRoute._addFileChildren(
-  DepartmentsEditRouteChildren,
-)
-
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/allocations/new': typeof AllocationsNewRoute
   '/courses/new': typeof CoursesNewRoute
-  '/departments/edit': typeof DepartmentsEditRouteWithChildren
   '/departments/new': typeof DepartmentsNewRoute
   '/professors/new': typeof ProfessorsNewRoute
   '/allocations': typeof AllocationsIndexRoute
@@ -252,7 +225,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/allocations/new': typeof AllocationsNewRoute
   '/courses/new': typeof CoursesNewRoute
-  '/departments/edit': typeof DepartmentsEditRouteWithChildren
   '/departments/new': typeof DepartmentsNewRoute
   '/professors/new': typeof ProfessorsNewRoute
   '/allocations': typeof AllocationsIndexRoute
@@ -270,7 +242,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/allocations/new': typeof AllocationsNewRoute
   '/courses/new': typeof CoursesNewRoute
-  '/departments/edit': typeof DepartmentsEditRouteWithChildren
   '/departments/new': typeof DepartmentsNewRoute
   '/professors/new': typeof ProfessorsNewRoute
   '/allocations/': typeof AllocationsIndexRoute
@@ -289,7 +260,6 @@ export interface FileRouteTypes {
     | '/'
     | '/allocations/new'
     | '/courses/new'
-    | '/departments/edit'
     | '/departments/new'
     | '/professors/new'
     | '/allocations'
@@ -305,7 +275,6 @@ export interface FileRouteTypes {
     | '/'
     | '/allocations/new'
     | '/courses/new'
-    | '/departments/edit'
     | '/departments/new'
     | '/professors/new'
     | '/allocations'
@@ -321,7 +290,6 @@ export interface FileRouteTypes {
     | '/'
     | '/allocations/new'
     | '/courses/new'
-    | '/departments/edit'
     | '/departments/new'
     | '/professors/new'
     | '/allocations/'
@@ -339,7 +307,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AllocationsNewRoute: typeof AllocationsNewRoute
   CoursesNewRoute: typeof CoursesNewRoute
-  DepartmentsEditRoute: typeof DepartmentsEditRouteWithChildren
   DepartmentsNewRoute: typeof DepartmentsNewRoute
   ProfessorsNewRoute: typeof ProfessorsNewRoute
   AllocationsIndexRoute: typeof AllocationsIndexRoute
@@ -348,6 +315,7 @@ export interface RootRouteChildren {
   ProfessorsIndexRoute: typeof ProfessorsIndexRoute
   AllocationsEditIdRoute: typeof AllocationsEditIdRoute
   CoursesEditIdRoute: typeof CoursesEditIdRoute
+  DepartmentsEditIdRoute: typeof DepartmentsEditIdRoute
   ProfessorsEditIdRoute: typeof ProfessorsEditIdRoute
 }
 
@@ -355,7 +323,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AllocationsNewRoute: AllocationsNewRoute,
   CoursesNewRoute: CoursesNewRoute,
-  DepartmentsEditRoute: DepartmentsEditRouteWithChildren,
   DepartmentsNewRoute: DepartmentsNewRoute,
   ProfessorsNewRoute: ProfessorsNewRoute,
   AllocationsIndexRoute: AllocationsIndexRoute,
@@ -364,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfessorsIndexRoute: ProfessorsIndexRoute,
   AllocationsEditIdRoute: AllocationsEditIdRoute,
   CoursesEditIdRoute: CoursesEditIdRoute,
+  DepartmentsEditIdRoute: DepartmentsEditIdRoute,
   ProfessorsEditIdRoute: ProfessorsEditIdRoute,
 }
 
@@ -380,7 +348,6 @@ export const routeTree = rootRoute
         "/",
         "/allocations/new",
         "/courses/new",
-        "/departments/edit",
         "/departments/new",
         "/professors/new",
         "/allocations/",
@@ -389,6 +356,7 @@ export const routeTree = rootRoute
         "/professors/",
         "/allocations/edit/$id",
         "/courses/edit/$id",
+        "/departments/edit/$id",
         "/professors/edit/$id"
       ]
     },
@@ -400,12 +368,6 @@ export const routeTree = rootRoute
     },
     "/courses/new": {
       "filePath": "courses/new.tsx"
-    },
-    "/departments/edit": {
-      "filePath": "departments/edit.tsx",
-      "children": [
-        "/departments/edit/$id"
-      ]
     },
     "/departments/new": {
       "filePath": "departments/new.tsx"
@@ -432,8 +394,7 @@ export const routeTree = rootRoute
       "filePath": "courses/edit/$id.tsx"
     },
     "/departments/edit/$id": {
-      "filePath": "departments/edit/$id.tsx",
-      "parent": "/departments/edit"
+      "filePath": "departments/edit/$id.tsx"
     },
     "/professors/edit/$id": {
       "filePath": "professors/edit/$id.tsx"
