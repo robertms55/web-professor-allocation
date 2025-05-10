@@ -35,6 +35,28 @@ type Allocation = {
   course: Course
 }
 
+// Mapeamento de dias da semana de inglês para português
+const dayTranslations = {
+  MONDAY: 'Segunda-feira',
+  TUESDAY: 'Terça-feira',
+  WEDNESDAY: 'Quarta-feira',
+  THURSDAY: 'Quinta-feira',
+  FRIDAY: 'Sexta-feira',
+  SATURDAY: 'Sábado',
+  SUNDAY: 'Domingo',
+}
+
+// Mapeamento de dias da semana de português para inglês (para o select)
+const daysOptions = [
+  { value: 'MONDAY', label: 'Segunda-feira' },
+  { value: 'TUESDAY', label: 'Terça-feira' },
+  { value: 'WEDNESDAY', label: 'Quarta-feira' },
+  { value: 'THURSDAY', label: 'Quinta-feira' },
+  { value: 'FRIDAY', label: 'Sexta-feira' },
+  { value: 'SATURDAY', label: 'Sábado' },
+  { value: 'SUNDAY', label: 'Domingo' },
+]
+
 function RouteComponent() {
   const { id } = Route.useParams()
   const [allocation, setAllocation] = useState<Allocation | null>(null)
@@ -81,7 +103,7 @@ function RouteComponent() {
 
     const payload = {
       id: Number(id),
-      day,
+      day,  // Mantém o valor em inglês para o backend
       start: formatTime(start),
       end: formatTime(end),
       professorId: Number(professorId),
@@ -113,6 +135,14 @@ function RouteComponent() {
       })
       .catch((error) => {
         console.error('Erro ao atualizar alocação:', error)
+        toast({
+          title: 'Erro ao atualizar alocação!',
+          description: error.message || 'Ocorreu um erro inesperado.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right',
+        })
       })
   }
 
@@ -128,9 +158,9 @@ function RouteComponent() {
             <FormControl isRequired>
               <FormLabel>Dia</FormLabel>
               <Select value={day} onChange={(e) => setDay(e.target.value)}>
-                {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map((d) => (
-                  <option key={d} value={d}>
-                    {d}
+                {daysOptions.map((dayOption) => (
+                  <option key={dayOption.value} value={dayOption.value}>
+                    {dayOption.label}
                   </option>
                 ))}
               </Select>
@@ -186,14 +216,14 @@ function RouteComponent() {
               </Select>
             </FormControl>
 
-   
+            <Box display="flex" gap={3}>
               <Button type="submit" colorScheme="blue">
                 Salvar
               </Button>
-         
-  <Button variant="outline" onClick={() => navigate({ to: '/allocations' })}>
-            Voltar
-          </Button>
+              <Button variant="outline" onClick={() => navigate({ to: '/allocations' })}>
+                Voltar
+              </Button>
+            </Box>
           </VStack>
         </form>
       )}

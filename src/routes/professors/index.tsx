@@ -11,8 +11,12 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
   useToast,
+  Flex,
+  Box,
+  Text,
+  HStack,
 } from '@chakra-ui/react'
-import { FiTrash2, FiEdit } from 'react-icons/fi'
+import { FiTrash2, FiEdit, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import Page from '@/components/page'
 import Table from '@/components/table'
 
@@ -42,6 +46,11 @@ function formatCPF(cpf: string) {
 function RouteComponent() {
   const [professors, setProfessors] = useState<Professor[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const itemsPerPage = 10
 
   const { isOpen, onOpen, onClose } = useDisclosure()
   const cancelRef = useRef<HTMLButtonElement>(null)
@@ -50,6 +59,11 @@ function RouteComponent() {
   useEffect(() => {
     fetchProfessors()
   }, [])
+
+  useEffect(() => {
+    // Atualiza o número total de páginas quando os dados são carregados
+    setTotalPages(Math.ceil(professors.length / itemsPerPage))
+  }, [professors])
 
   const fetchProfessors = () => {
     fetch('http://localhost:8080/professors')
@@ -106,6 +120,26 @@ function RouteComponent() {
       })
   }
 
+  // Funções para controlar a paginação
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  // Calcula os itens para a página atual
+  const getCurrentItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return professors.slice(startIndex, endIndex)
+  }
+
   return (
     <>
       <Page
@@ -154,8 +188,36 @@ function RouteComponent() {
               ),
             },
           ]}
-          items={professors}
+          items={getCurrentItems()}
         />
+
+        {/* Controles de Paginação */}
+        <Flex justifyContent="space-between" alignItems="center" mt={4}>
+          <Box>
+            <Text fontSize="sm">
+              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, professors.length)} de {professors.length} professores
+            </Text>
+          </Box>
+          <HStack>
+            <IconButton
+              icon={<FiChevronLeft />}
+              onClick={prevPage}
+              isDisabled={currentPage === 1}
+              aria-label="Página anterior"
+              size="sm"
+            />
+            <Text mx={2}>
+              Página {currentPage} de {totalPages}
+            </Text>
+            <IconButton
+              icon={<FiChevronRight />}
+              onClick={nextPage}
+              isDisabled={currentPage === totalPages || totalPages === 0}
+              aria-label="Próxima página"
+              size="sm"
+            />
+          </HStack>
+        </Flex>
       </Page>
 
       {/* Popup de Confirmação */}

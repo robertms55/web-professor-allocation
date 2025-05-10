@@ -11,8 +11,12 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
   HStack,
+  Flex,
+  Box,
+  Text,
+  useToast,
 } from '@chakra-ui/react'
-import { FiTrash2, FiEdit } from 'react-icons/fi'
+import { FiTrash2, FiEdit, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import Page from '@/components/page'
 import Table from '@/components/table'
 
@@ -35,16 +39,38 @@ type Allocation = {
   }
 }
 
+// Mapeamento de dias da semana de inglês para português
+const dayTranslations = {
+  monday: 'Segunda-feira',
+  tuesday: 'Terça-feira',
+  wednesday: 'Quarta-feira',
+  thursday: 'Quinta-feira',
+  friday: 'Sexta-feira',
+  saturday: 'Sábado',
+  sunday: 'Domingo',
+}
+
 function RouteComponent() {
   const [allocations, setAllocations] = useState<Allocation[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const itemsPerPage = 10
 
   const { isOpen, onOpen, onClose } = useDisclosure()
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const toast = useToast()
 
   useEffect(() => {
     fetchAllocations()
   }, [])
+
+  useEffect(() => {
+    // Atualiza o número total de páginas quando os dados são carregados
+    setTotalPages(Math.ceil(allocations.length / itemsPerPage))
+  }, [allocations])
 
   const fetchAllocations = () => {
     fetch('http://localhost:8080/allocations')
@@ -67,11 +93,67 @@ function RouteComponent() {
     fetch(`http://localhost:8080/allocations/${selectedId}`, {
       method: 'DELETE',
     })
-      .then(() => {
-        fetchAllocations()
+      .then((response) => {
+        if (response.ok) {
+          fetchAllocations()
+          toast({
+            title: 'Alocação excluída!',
+            description: 'A alocação foi removida com sucesso.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        } else {
+          toast({
+            title: 'Erro ao excluir alocação!',
+            description: 'Ocorreu um erro ao excluir a alocação.',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+          })
+        }
         onClose()
       })
-      .catch((error) => console.error('Erro ao deletar alocação:', error))
+      .catch((error) => {
+        console.error('Erro ao deletar alocação:', error)
+        toast({
+          title: 'Erro ao excluir alocação!',
+          description: 'Ocorreu um erro inesperado. Tente novamente.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right',
+        })
+        onClose()
+      })
+  }
+
+  // Funções para controlar a paginação
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  // Calcula os itens para a página atual
+  const getCurrentItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return allocations.slice(startIndex, endIndex)
+  }
+
+  // Função para traduzir o dia da semana para português
+  const translateDay = (day: string) => {
+    const lowerCaseDay = day?.toLowerCase()
+    return dayTranslations[lowerCaseDay as keyof typeof dayTranslations] || day || 'N/A'
   }
 
   return (
@@ -87,7 +169,11 @@ function RouteComponent() {
         <Table
           columns={[
             { label: 'ID', name: 'id' },
-            { label: 'Day', name: 'day' },
+            { 
+              label: 'Dia', 
+              name: 'day',
+              render: (value: string) => translateDay(value),
+            },
             {
               label: 'Início',
               name: 'start',
@@ -132,8 +218,36 @@ function RouteComponent() {
               ),
             },
           ]}
-          items={allocations}
+          items={getCurrentItems()}
         />
+        
+        {/* Controles de Paginação */}
+        <Flex justifyContent="space-between" alignItems="center" mt={4}>
+          <Box>
+            <Text fontSize="sm">
+              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, allocations.length)} de {allocations.length} alocações
+            </Text>
+          </Box>
+          <HStack>
+            <IconButton
+              icon={<FiChevronLeft />}
+              onClick={prevPage}
+              isDisabled={currentPage === 1}
+              aria-label="Página anterior"
+              size="sm"
+            />
+            <Text mx={2}>
+              Página {currentPage} de {totalPages}
+            </Text>
+            <IconButton
+              icon={<FiChevronRight />}
+              onClick={nextPage}
+              isDisabled={currentPage === totalPages || totalPages === 0}
+              aria-label="Próxima página"
+              size="sm"
+            />
+          </HStack>
+        </Flex>
       </Page>
 
       <AlertDialog
@@ -169,3 +283,5 @@ function formatTime(time: string) {
   const period = hour < 12 ? 'AM' : 'PM'
   return `${formattedHour}:${minute.toString().padStart(2, '0')} ${period}`
 }
+
+export default RouteComponent

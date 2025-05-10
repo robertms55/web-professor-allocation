@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
@@ -9,6 +8,7 @@ import {
   Select,
   VStack,
   Box,
+  useToast,
 } from '@chakra-ui/react'
 import Page from '@/components/page'
 
@@ -26,6 +26,17 @@ type Course = {
   name: string
 }
 
+// Mapeamento de dias da semana de português para inglês (para o select)
+const daysOptions = [
+  { value: 'MONDAY', label: 'Segunda-feira' },
+  { value: 'TUESDAY', label: 'Terça-feira' },
+  { value: 'WEDNESDAY', label: 'Quarta-feira' },
+  { value: 'THURSDAY', label: 'Quinta-feira' },
+  { value: 'FRIDAY', label: 'Sexta-feira' },
+  { value: 'SATURDAY', label: 'Sábado' },
+  { value: 'SUNDAY', label: 'Domingo' },
+]
+
 function RouteComponent() {
   const [professors, setProfessors] = useState<Professor[]>([])
   const [courses, setCourses] = useState<Course[]>([])
@@ -37,6 +48,7 @@ function RouteComponent() {
   const [courseId, setCourseId] = useState('')
 
   const navigate = useNavigate()
+  const toast = useToast()
 
   useEffect(() => {
     fetch('http://localhost:8080/professors')
@@ -58,7 +70,7 @@ function RouteComponent() {
     }
 
     const payload = {
-      day,
+      day,  // Mantém o valor em inglês para o backend
       start: formatTime(start),
       end: formatTime(end),
       professorId: Number(professorId),
@@ -74,6 +86,14 @@ function RouteComponent() {
     })
       .then((res) => {
         if (res.ok) {
+          toast({
+            title: 'Alocação criada!',
+            description: 'Nova alocação foi criada com sucesso.',
+            status: 'success',
+            duration: 1000,
+            isClosable: true,
+            position: 'top-right',
+          })
           navigate({ to: '/allocations' })
         } else {
           return res.json().then((err) => {
@@ -83,6 +103,14 @@ function RouteComponent() {
       })
       .catch((error) => {
         console.error('Erro ao criar alocação:', error)
+        toast({
+          title: 'Erro ao criar alocação!',
+          description: error.message || 'Ocorreu um erro inesperado.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right',
+        })
       })
   }
 
@@ -97,9 +125,9 @@ function RouteComponent() {
           <FormControl isRequired>
             <FormLabel>Dia</FormLabel>
             <Select value={day} onChange={(e) => setDay(e.target.value)}>
-              {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map((d) => (
-                <option key={d} value={d}>
-                  {d}
+              {daysOptions.map((dayOption) => (
+                <option key={dayOption.value} value={dayOption.value}>
+                  {dayOption.label}
                 </option>
               ))}
             </Select>
@@ -154,12 +182,15 @@ function RouteComponent() {
               ))}
             </Select>
           </FormControl>
+          
+          <Box display="flex" gap={3}>
             <Button type="submit" colorScheme="blue">
               Criar Alocação
             </Button>         
-          <Button variant="outline" onClick={() => navigate({ to: '/allocations' })}>
-            Voltar
-          </Button>
+            <Button variant="outline" onClick={() => navigate({ to: '/allocations' })}>
+              Voltar
+            </Button>
+          </Box>
         </VStack>
       </form>
     </Page>
