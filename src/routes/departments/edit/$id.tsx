@@ -20,7 +20,7 @@ function RouteComponent() {
   }, [id])
 
   const fetchDepartment = (departmentId: string) => {
-    fetch(`http://localhost:8080/departments/${departmentId}`)
+    fetch(`https://professor-allocation-raposa-2.onrender.com/departments/${departmentId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Erro ao buscar departamento')
@@ -34,7 +34,7 @@ function RouteComponent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (department) {
-      fetch(`http://localhost:8080/departments/${department.id}`, {
+      fetch(`https://professor-allocation-raposa-2.onrender.com/departments/${department.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(department),

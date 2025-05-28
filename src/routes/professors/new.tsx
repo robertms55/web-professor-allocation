@@ -7,7 +7,7 @@ export const Route = createFileRoute('/professors/new')({
   component: RouteComponent,
 })
 
-// Função para formatar CPF
+
 function formatCPF(value: string) {
   return value
     .replace(/\D/g, '')
@@ -25,7 +25,7 @@ function RouteComponent() {
   const toast = useToast()
 
   useEffect(() => {
-    fetch('http://localhost:8080/departments')
+    fetch('https://professor-allocation-raposa-2.onrender.com/departments')
       .then((response) => response.json())
       .then((data) => setDepartments(data))
       .catch((error) => console.error('Erro ao buscar departamentos:', error))
@@ -51,7 +51,7 @@ function RouteComponent() {
       departmentId: parseInt(departmentId.toString()),
     }
 
-    fetch('http://localhost:8080/professors', {
+    fetch('https://professor-allocation-raposa-2.onrender.com/professors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(professorData),
@@ -68,7 +68,7 @@ function RouteComponent() {
           })
           navigate({ to: '/professors' })
         } else {
-          // Erro conhecido, como CPF duplicado
+         
           toast({
             title: 'Erro ao cadastrar professor!',
             description: 'O CPF informado já está em uso.',

@@ -15,6 +15,7 @@ import {
   Box,
   Text,
   HStack,
+  Spinner,
 } from '@chakra-ui/react'
 import { FiTrash2, FiEdit, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import Page from '@/components/page'
@@ -34,7 +35,7 @@ type Professor = {
   }
 }
 
-// Função simples para formatar CPF
+
 function formatCPF(cpf: string) {
   cpf = cpf.replace(/\D/g, '')
   if (cpf.length === 11) {
@@ -43,11 +44,14 @@ function formatCPF(cpf: string) {
   return cpf
 }
 
+const CACHE_KEY = 'professorsCache'
+const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutos
+
 function RouteComponent() {
   const [professors, setProfessors] = useState<Professor[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  
-  // Paginação
+  const [isLoading, setIsLoading] = useState(false)
+
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const itemsPerPage = 10
@@ -61,18 +65,51 @@ function RouteComponent() {
   }, [])
 
   useEffect(() => {
-    // Atualiza o número total de páginas quando os dados são carregados
     setTotalPages(Math.ceil(professors.length / itemsPerPage))
   }, [professors])
 
   const fetchProfessors = () => {
-    fetch('http://localhost:8080/professors')
+    setIsLoading(true)
+
+    // Tenta ler cache
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (cached) {
+      try {
+        const parsedCache = JSON.parse(cached)
+        const { data, timestamp } = parsedCache
+        const now = Date.now()
+
+        // Verifica se cache ainda é válido
+        if (now - timestamp < CACHE_EXPIRATION_MS) {
+          setProfessors(data)
+          setIsLoading(false)
+          return
+        } else {
+          // Cache expirou, remove
+          localStorage.removeItem(CACHE_KEY)
+        }
+      } catch (e) {
+        console.warn('Erro ao ler cache:', e)
+        localStorage.removeItem(CACHE_KEY)
+      }
+    }
+
+   
+    fetch('https://professor-allocation-raposa-2.onrender.com/professors')
       .then((response) => response.json())
       .then((result) => {
         const sortedProfessors = result.sort((a: Professor, b: Professor) => a.id - b.id)
         setProfessors(sortedProfessors)
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({ data: sortedProfessors, timestamp: Date.now() }),
+        )
+        setIsLoading(false)
       })
-      .catch((error) => console.error('Erro ao buscar professores:', error))
+      .catch((error) => {
+        console.error('Erro ao buscar professores:', error)
+        setIsLoading(false)
+      })
   }
 
   const handleDelete = (id: number) => {
@@ -82,10 +119,10 @@ function RouteComponent() {
 
   const confirmDelete = () => {
     if (selectedId === null) return
-    fetch(`http://localhost:8080/professors/${selectedId}`, { method: 'DELETE' })
+    fetch(`https://professor-allocation-raposa-2.onrender.com/professors/${selectedId}`, { method: 'DELETE' })
       .then((response) => {
         if (response.ok) {
-          fetchProfessors()
+          fetchProfessors() // Atualiza lista (e cache)
           toast({
             title: 'Professor excluído!',
             description: 'O professor foi removido com sucesso.',
@@ -120,7 +157,6 @@ function RouteComponent() {
       })
   }
 
-  // Funções para controlar a paginação
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1)
@@ -133,7 +169,6 @@ function RouteComponent() {
     }
   }
 
-  // Calcula os itens para a página atual
   const getCurrentItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
@@ -150,77 +185,83 @@ function RouteComponent() {
           </Button>
         }
       >
-        <Table
-          columns={[
-            { label: 'ID', name: 'id' },
-            { 
-              label: 'CPF', 
-              name: 'cpf', 
-              render: (_: any, row: Professor) => formatCPF(row.cpf) 
-            },
-            { label: 'Nome', name: 'name' },
-            { 
-              label: 'Departamento', 
-              name: 'department',
-              render: (_: any, row: Professor) => row.department?.name || 'Sem Departamento'
-            },
-            {
-              label: 'Ações',
-              name: 'options',
-              render: (_: any, row: Professor) => (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                  <IconButton
-                    icon={<FiEdit />}
-                    size="sm"
-                    aria-label="Editar"
-                    colorScheme="yellow"
-                    as={Link}
-                    to={`/professors/edit/${row.id}`}
-                  />
-                  <IconButton
-                    icon={<FiTrash2 />}
-                    size="sm"
-                    aria-label="Deletar"
-                    colorScheme="red"
-                    onClick={() => handleDelete(row.id)}
-                  />
-                </div>
-              ),
-            },
-          ]}
-          items={getCurrentItems()}
-        />
+        {isLoading ? (
+          <Flex justifyContent="center" alignItems="center" height="200px">
+            <Spinner size="xl" />
+          </Flex>
+        ) : (
+          <>
+            <Table
+              columns={[
+                { label: 'ID', name: 'id' },
+                {
+                  label: 'CPF',
+                  name: 'cpf',
+                  render: (_: any, row: Professor) => formatCPF(row.cpf),
+                },
+                { label: 'Nome', name: 'name' },
+                {
+                  label: 'Departamento',
+                  name: 'department',
+                  render: (_: any, row: Professor) => row.department?.name || 'Sem Departamento',
+                },
+                {
+                  label: 'Ações',
+                  name: 'options',
+                  render: (_: any, row: Professor) => (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                      <IconButton
+                        icon={<FiEdit />}
+                        size="sm"
+                        aria-label="Editar"
+                        colorScheme="yellow"
+                        as={Link}
+                        to={`/professors/edit/${row.id}`}
+                      />
+                      <IconButton
+                        icon={<FiTrash2 />}
+                        size="sm"
+                        aria-label="Deletar"
+                        colorScheme="red"
+                        onClick={() => handleDelete(row.id)}
+                      />
+                    </div>
+                  ),
+                },
+              ]}
+              items={getCurrentItems()}
+            />
 
-        {/* Controles de Paginação */}
-        <Flex justifyContent="space-between" alignItems="center" mt={4}>
-          <Box>
-            <Text fontSize="sm">
-              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, professors.length)} de {professors.length} professores
-            </Text>
-          </Box>
-          <HStack>
-            <IconButton
-              icon={<FiChevronLeft />}
-              onClick={prevPage}
-              isDisabled={currentPage === 1}
-              aria-label="Página anterior"
-              size="sm"
-            />
-            <Text mx={2}>
-              Página {currentPage} de {totalPages}
-            </Text>
-            <IconButton
-              icon={<FiChevronRight />}
-              onClick={nextPage}
-              isDisabled={currentPage === totalPages || totalPages === 0}
-              aria-label="Próxima página"
-              size="sm"
-            />
-          </HStack>
-        </Flex>
+            <Flex justifyContent="space-between" alignItems="center" mt={4}>
+              <Box>
+                <Text fontSize="sm">
+                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, professors.length)} de {professors.length} professores
+                </Text>
+              </Box>
+              <HStack>
+                <IconButton
+                  icon={<FiChevronLeft />}
+                  onClick={prevPage}
+                  isDisabled={currentPage === 1}
+                  aria-label="Página anterior"
+                  size="sm"
+                />
+                <Text mx={2}>
+                  Página {currentPage} de {totalPages}
+                </Text>
+                <IconButton
+                  icon={<FiChevronRight />}
+                  onClick={nextPage}
+                  isDisabled={currentPage === totalPages || totalPages === 0}
+                  aria-label="Próxima página"
+                  size="sm"
+                />
+              </HStack>
+            </Flex>
+          </>
+        )}
       </Page>
 
-      {/* Popup de Confirmação */}
       <AlertDialog
         isOpen={isOpen}
         leastDestructiveRef={cancelRef}

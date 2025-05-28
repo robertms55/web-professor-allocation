@@ -11,7 +11,7 @@ function RouteComponent() {
   const { id } = useParams({ from: '/courses/edit/$id' })
   const [course, setCourse] = useState<any | null>(null)
   const navigate = useNavigate()
-  const toast = useToast()  // Hook do Chakra para mostrar toasts
+  const toast = useToast() 
 
   useEffect(() => {
     if (id) {
@@ -20,7 +20,7 @@ function RouteComponent() {
   }, [id])
 
   const fetchCourse = (courseId: string) => {
-    fetch(`http://localhost:8080/Courses/${courseId}`)
+    fetch(`https://professor-allocation-raposa-2.onrender.com/Courses/${courseId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error('Erro ao buscar curso')
@@ -34,7 +34,7 @@ function RouteComponent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (course) {
-      fetch(`http://localhost:8080/Courses/${course.id}`, {
+      fetch(`https://professor-allocation-raposa-2.onrender.com/Courses/${course.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(course),

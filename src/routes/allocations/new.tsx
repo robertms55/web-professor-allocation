@@ -9,6 +9,8 @@ import {
   VStack,
   Box,
   useToast,
+  Spinner,
+  Center,
 } from '@chakra-ui/react'
 import Page from '@/components/page'
 
@@ -26,7 +28,6 @@ type Course = {
   name: string
 }
 
-// Mapeamento de dias da semana de português para inglês (para o select)
 const daysOptions = [
   { value: 'MONDAY', label: 'Segunda-feira' },
   { value: 'TUESDAY', label: 'Terça-feira' },
@@ -40,6 +41,8 @@ const daysOptions = [
 function RouteComponent() {
   const [professors, setProfessors] = useState<Professor[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [day, setDay] = useState('MONDAY')
   const [start, setStart] = useState('08:00:00')
@@ -51,33 +54,47 @@ function RouteComponent() {
   const toast = useToast()
 
   useEffect(() => {
-    fetch('http://localhost:8080/professors')
-      .then((res) => res.json())
-      .then((data) => setProfessors(Array.isArray(data) ? data : []))
+    const fetchData = async () => {
+      try {
+        const [professorsRes, coursesRes] = await Promise.all([
+          fetch('https://professor-allocation-raposa-2.onrender.com/professors'),
+          fetch('https://professor-allocation-raposa-2.onrender.com/Courses'),
+        ])
 
-    fetch('http://localhost:8080/Courses')
-      .then((res) => res.json())
-      .then((data) => setCourses(Array.isArray(data) ? data : []))
+        const profData = await professorsRes.json()
+        const courseData = await coursesRes.json()
+
+        setProfessors(Array.isArray(profData) ? profData : [])
+        setCourses(Array.isArray(courseData) ? courseData : [])
+      } catch (error) {
+        setProfessors([])
+        setCourses([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
-    // Converte "08:00" ou "08:00:00" sempre para "HH:mm:ss"
     const formatTime = (time: string) => {
       const [h = '00', m = '00', s = '00'] = time.split(':')
       return `${h.padStart(2, '0')}:${m.padStart(2, '0')}:${s.padStart(2, '0')}`
     }
 
     const payload = {
-      day,  // Mantém o valor em inglês para o backend
+      day,
       start: formatTime(start),
       end: formatTime(end),
       professorId: Number(professorId),
       courseId: Number(courseId),
     }
 
-    fetch('http://localhost:8080/allocations', {
+    fetch('https://professor-allocation-raposa-2.onrender.com/allocations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,16 +129,25 @@ function RouteComponent() {
           position: 'top-right',
         })
       })
+      .finally(() => {
+        setIsSubmitting(false)
+      })
+  }
+
+  if (loading) {
+    return (
+      <Page title="Nova Alocação" rightElement={null}>
+        <Center h="60vh">
+          <Spinner size="xl" color="blue.500" thickness="4px" />
+        </Center>
+      </Page>
+    )
   }
 
   return (
-    <Page
-      title="Nova Alocação"
-      rightElement={null}
-    >
+    <Page title="Nova Alocação" rightElement={null}>
       <form onSubmit={handleSubmit}>
         <VStack spacing={4} align="stretch">
-
           <FormControl isRequired>
             <FormLabel>Dia</FormLabel>
             <Select value={day} onChange={(e) => setDay(e.target.value)}>
@@ -137,7 +163,7 @@ function RouteComponent() {
             <FormLabel>Hora de Início</FormLabel>
             <Input
               type="time"
-              step="1" // permite segundos
+              step="1"
               value={start}
               onChange={(e) => setStart(e.target.value)}
             />
@@ -147,7 +173,7 @@ function RouteComponent() {
             <FormLabel>Hora de Término</FormLabel>
             <Input
               type="time"
-              step="1" // permite segundos
+              step="1"
               value={end}
               onChange={(e) => setEnd(e.target.value)}
             />
@@ -182,12 +208,12 @@ function RouteComponent() {
               ))}
             </Select>
           </FormControl>
-          
+
           <Box display="flex" gap={3}>
-            <Button type="submit" colorScheme="blue">
+            <Button type="submit" colorScheme="blue" isLoading={isSubmitting}>
               Criar Alocação
-            </Button>         
-            <Button variant="outline" onClick={() => navigate({ to: '/allocations' })}>
+            </Button>
+            <Button variant="outline" onClick={() => navigate({ to: '/allocations' })} isDisabled={isSubmitting}>
               Voltar
             </Button>
           </Box>

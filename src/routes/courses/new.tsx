@@ -9,12 +9,15 @@ export const Route = createFileRoute('/courses/new')({
 
 function RouteComponent() {
   const [name, setName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    fetch('http://localhost:8080/Courses', {
+    setIsLoading(true)
+
+    fetch('https://professor-allocation-raposa-2.onrender.com/Courses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
@@ -26,11 +29,24 @@ function RouteComponent() {
           status: 'success',
           duration: 3000,
           isClosable: true,
-          position: 'top-right', 
+          position: 'top-right',
         })
         navigate({ to: '/courses' })
       })
-      .catch((error) => console.error('Erro ao adicionar curso:', error))
+      .catch((error) => {
+        console.error('Erro ao adicionar curso:', error)
+        toast({
+          title: 'Erro!',
+          description: 'Não foi possível adicionar o curso.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right',
+        })
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }
 
   return (
@@ -43,12 +59,17 @@ function RouteComponent() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Digite o nome"
+              disabled={isLoading}
             />
           </FormControl>
-          <Button type="submit" colorScheme="blue">
+          <Button type="submit" colorScheme="blue" isLoading={isLoading}>
             Salvar
           </Button>
-          <Button variant="outline" onClick={() => navigate({ to: '/courses' })}>
+          <Button
+            variant="outline"
+            onClick={() => navigate({ to: '/courses' })}
+            isDisabled={isLoading}
+          >
             Voltar
           </Button>
         </VStack>
@@ -56,3 +77,5 @@ function RouteComponent() {
     </Page>
   )
 }
+
+export default RouteComponent

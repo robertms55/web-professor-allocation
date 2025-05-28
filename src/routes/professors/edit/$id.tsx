@@ -31,7 +31,7 @@ function RouteComponent() {
   }, [id])
 
   const fetchProfessor = (professorId: string) => {
-    fetch(`http://localhost:8080/professors/${professorId}`)
+    fetch(`https://professor-allocation-raposa-2.onrender.com/professors/${professorId}`)
       .then((response) => {
         if (!response.ok) throw new Error('Erro ao buscar professor')
         return response.json()
@@ -41,7 +41,7 @@ function RouteComponent() {
   }
 
   const fetchDepartments = () => {
-    fetch('http://localhost:8080/departments')
+    fetch('https://professor-allocation-raposa-2.onrender.com/departments')
       .then((response) => response.json())
       .then((result) => setDepartments(result))
       .catch((error) => console.error('Erro ao buscar departamentos:', error))
@@ -54,7 +54,7 @@ function RouteComponent() {
         ...professor,
         cpf: professor.cpf.replace(/\D/g, ''), // Envia só números
       }
-      fetch(`http://localhost:8080/professors/${professor.id}`, {
+      fetch(`https://professor-allocation-raposa-2.onrender.com/professors/${professor.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend),

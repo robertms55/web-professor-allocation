@@ -15,6 +15,8 @@ import {
   Flex,
   Box,
   Text,
+  Spinner,
+  Center,
 } from '@chakra-ui/react'
 import { FiTrash2, FiEdit, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import Page from '@/components/page'
@@ -29,11 +31,13 @@ type Course = {
   name: string
 }
 
+const LOCAL_STORAGE_KEY = 'cachedCourses'
+
 function RouteComponent() {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  
-  // Paginação
+  const [isLoading, setIsLoading] = useState(true)
+
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const itemsPerPage = 10
@@ -43,22 +47,42 @@ function RouteComponent() {
   const toast = useToast()
 
   useEffect(() => {
-    fetchCourses()
+    // Tenta carregar do localStorage primeiro
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY)
+    if (cached) {
+      try {
+        const parsed: Course[] = JSON.parse(cached)
+        setCourses(parsed)
+        setIsLoading(false)
+      } catch {
+    
+        fetchCourses()
+      }
+    } else {
+      fetchCourses()
+    }
   }, [])
 
   useEffect(() => {
-    // Atualiza o número total de páginas quando os dados são carregados
     setTotalPages(Math.ceil(courses.length / itemsPerPage))
+    // Atualiza cache sempre que courses mudar
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(courses))
   }, [courses])
 
   const fetchCourses = () => {
-    fetch('http://localhost:8080/Courses')
+    setIsLoading(true)
+    fetch('https://professor-allocation-raposa-2.onrender.com/Courses')
       .then((response) => response.json())
       .then((result) => {
         const sortedCourses = result.sort((a, b) => a.id - b.id)
         setCourses(sortedCourses)
+        setIsLoading(false)
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sortedCourses))
       })
-      .catch((error) => console.error('Erro ao buscar cursos:', error))
+      .catch((error) => {
+        console.error('Erro ao buscar cursos:', error)
+        setIsLoading(false)
+      })
   }
 
   const handleDelete = (id: number) => {
@@ -68,10 +92,13 @@ function RouteComponent() {
 
   const confirmDelete = () => {
     if (selectedId === null) return
-    fetch(`http://localhost:8080/Courses/${selectedId}`, { method: 'DELETE' })
+    fetch(`https://professor-allocation-raposa-2.onrender.com/Courses/${selectedId}`, { method: 'DELETE' })
       .then((response) => {
         if (response.ok) {
-          fetchCourses()
+         
+          const updatedCourses = courses.filter((course) => course.id !== selectedId)
+          setCourses(updatedCourses)
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedCourses))
           toast({
             title: 'Curso excluído!',
             description: 'O curso foi removido com sucesso.',
@@ -90,7 +117,6 @@ function RouteComponent() {
             position: 'top-right',
           })
         }
-        // Fechar o popup de confirmação após a tentativa de exclusão
         onClose()
       })
       .catch((error) => {
@@ -103,12 +129,10 @@ function RouteComponent() {
           isClosable: true,
           position: 'top-right',
         })
-        // Fechar o popup de confirmação após falha
         onClose()
       })
   }
 
-  // Funções para controlar a paginação
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1)
@@ -121,7 +145,6 @@ function RouteComponent() {
     }
   }
 
-  // Calcula os itens para a página atual
   const getCurrentItems = () => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
@@ -138,65 +161,72 @@ function RouteComponent() {
           </Button>
         }
       >
-        <Table
-          columns={[
-            { label: 'ID', name: 'id' },
-            { label: 'Nome', name: 'name' },
-            {
-              label: 'Ações',
-              name: 'options',
-              width: '1%',
-              render: (_value: any, row: Course) => (
-                <HStack justify="flex-end">
-                  <IconButton
-                    icon={<FiEdit />}
-                    size="sm"
-                    aria-label="Editar"
-                    colorScheme="yellow"
-                    as={Link}
-                    to={`/courses/edit/${row.id}`}
-                  />
-                  <IconButton
-                    icon={<FiTrash2 />}
-                    size="sm"
-                    aria-label="Deletar"
-                    colorScheme="red"
-                    onClick={() => handleDelete(row.id)}
-                  />
-                </HStack>
-              ),
-            },
-          ]}
-          items={getCurrentItems()}
-        />
-        
-        {/* Controles de Paginação */}
-        <Flex justifyContent="space-between" alignItems="center" mt={4}>
-          <Box>
-            <Text fontSize="sm">
-              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, courses.length)} de {courses.length} cursos
-            </Text>
-          </Box>
-          <HStack>
-            <IconButton
-              icon={<FiChevronLeft />}
-              onClick={prevPage}
-              isDisabled={currentPage === 1}
-              aria-label="Página anterior"
-              size="sm"
+        {isLoading ? (
+          <Center py={10}>
+            <Spinner size="xl" />
+          </Center>
+        ) : (
+          <>
+            <Table
+              columns={[
+                { label: 'ID', name: 'id' },
+                { label: 'Nome', name: 'name' },
+                {
+                  label: 'Ações',
+                  name: 'options',
+                  width: '1%',
+                  render: (_value: any, row: Course) => (
+                    <HStack justify="flex-end">
+                      <IconButton
+                        icon={<FiEdit />}
+                        size="sm"
+                        aria-label="Editar"
+                        colorScheme="yellow"
+                        as={Link}
+                        to={`/courses/edit/${row.id}`}
+                      />
+                      <IconButton
+                        icon={<FiTrash2 />}
+                        size="sm"
+                        aria-label="Deletar"
+                        colorScheme="red"
+                        onClick={() => handleDelete(row.id)}
+                      />
+                    </HStack>
+                  ),
+                },
+              ]}
+              items={getCurrentItems()}
             />
-            <Text mx={2}>
-              Página {currentPage} de {totalPages}
-            </Text>
-            <IconButton
-              icon={<FiChevronRight />}
-              onClick={nextPage}
-              isDisabled={currentPage === totalPages || totalPages === 0}
-              aria-label="Próxima página"
-              size="sm"
-            />
-          </HStack>
-        </Flex>
+
+            <Flex justifyContent="space-between" alignItems="center" mt={4}>
+              <Box>
+                <Text fontSize="sm">
+                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, courses.length)} de {courses.length} cursos
+                </Text>
+              </Box>
+              <HStack>
+                <IconButton
+                  icon={<FiChevronLeft />}
+                  onClick={prevPage}
+                  isDisabled={currentPage === 1}
+                  aria-label="Página anterior"
+                  size="sm"
+                />
+                <Text mx={2}>
+                  Página {currentPage} de {totalPages}
+                </Text>
+                <IconButton
+                  icon={<FiChevronRight />}
+                  onClick={nextPage}
+                  isDisabled={currentPage === totalPages || totalPages === 0}
+                  aria-label="Próxima página"
+                  size="sm"
+                />
+              </HStack>
+            </Flex>
+          </>
+        )}
       </Page>
 
       {/* Popup de Confirmação */}

@@ -14,7 +14,7 @@ function NewDepartmentPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    fetch('http://localhost:8080/departments', {
+    fetch('https://professor-allocation-raposa-2.onrender.com/departments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),

@@ -9,6 +9,8 @@ import {
   VStack,
   Box,
   useToast,
+  Spinner,
+  Center,
 } from '@chakra-ui/react'
 import Page from '@/components/page'
 
@@ -35,18 +37,6 @@ type Allocation = {
   course: Course
 }
 
-// Mapeamento de dias da semana de inglês para português
-const dayTranslations = {
-  MONDAY: 'Segunda-feira',
-  TUESDAY: 'Terça-feira',
-  WEDNESDAY: 'Quarta-feira',
-  THURSDAY: 'Quinta-feira',
-  FRIDAY: 'Sexta-feira',
-  SATURDAY: 'Sábado',
-  SUNDAY: 'Domingo',
-}
-
-// Mapeamento de dias da semana de português para inglês (para o select)
 const daysOptions = [
   { value: 'MONDAY', label: 'Segunda-feira' },
   { value: 'TUESDAY', label: 'Terça-feira' },
@@ -69,29 +59,49 @@ function RouteComponent() {
   const [professorId, setProfessorId] = useState('')
   const [courseId, setCourseId] = useState('')
 
+  const [isLoading, setIsLoading] = useState(true)
+
   const navigate = useNavigate()
   const toast = useToast()
 
   useEffect(() => {
-    fetch(`http://localhost:8080/allocations/${id}`)
-      .then((res) => res.json())
-      .then((data: Allocation) => {
-        setAllocation(data)
-        setDay(data.day)
-        setStart(data.start)
-        setEnd(data.end)
-        setProfessorId(String(data.professor.id))
-        setCourseId(String(data.course.id))
-      })
+    const fetchData = async () => {
+      try {
+        const allocationRes = await fetch(`https://professor-allocation-raposa-2.onrender.com/allocations/${id}`)
+        const allocationData: Allocation = await allocationRes.json()
+        setAllocation(allocationData)
+        setDay(allocationData.day)
+        setStart(allocationData.start)
+        setEnd(allocationData.end)
+        setProfessorId(String(allocationData.professor.id))
+        setCourseId(String(allocationData.course.id))
 
-    fetch('http://localhost:8080/professors')
-      .then((res) => res.json())
-      .then((data) => setProfessors(Array.isArray(data) ? data : []))
+        const [professorsRes, coursesRes] = await Promise.all([
+          fetch('https://professor-allocation-raposa-2.onrender.com/professors'),
+          fetch('https://professor-allocation-raposa-2.onrender.com/Courses'),
+        ])
 
-    fetch('http://localhost:8080/Courses')
-      .then((res) => res.json())
-      .then((data) => setCourses(Array.isArray(data) ? data : []))
-  }, [id])
+        const professorsData = await professorsRes.json()
+        const coursesData = await coursesRes.json()
+
+        setProfessors(Array.isArray(professorsData) ? professorsData : [])
+        setCourses(Array.isArray(coursesData) ? coursesData : [])
+      } catch (error) {
+        toast({
+          title: 'Erro ao carregar dados!',
+          description: String(error),
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right',
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id, toast])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,14 +113,14 @@ function RouteComponent() {
 
     const payload = {
       id: Number(id),
-      day,  // Mantém o valor em inglês para o backend
+      day,
       start: formatTime(start),
       end: formatTime(end),
       professorId: Number(professorId),
       courseId: Number(courseId),
     }
 
-    fetch(`http://localhost:8080/allocations/${id}`, {
+    fetch(`https://professor-allocation-raposa-2.onrender.com/allocations/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -134,7 +144,6 @@ function RouteComponent() {
         }
       })
       .catch((error) => {
-        console.error('Erro ao atualizar alocação:', error)
         toast({
           title: 'Erro ao atualizar alocação!',
           description: error.message || 'Ocorreu um erro inesperado.',
@@ -147,14 +156,14 @@ function RouteComponent() {
   }
 
   return (
-    <Page
-      title="Editar Alocação"
-      rightElement={null}
-    >
-      {allocation && (
+    <Page title="Editar Alocação" rightElement={null}>
+      {isLoading ? (
+        <Center h="300px">
+          <Spinner size="xl" color="blue.500" />
+        </Center>
+      ) : allocation ? (
         <form onSubmit={handleSubmit}>
           <VStack spacing={4} align="stretch">
-
             <FormControl isRequired>
               <FormLabel>Dia</FormLabel>
               <Select value={day} onChange={(e) => setDay(e.target.value)}>
@@ -226,6 +235,10 @@ function RouteComponent() {
             </Box>
           </VStack>
         </form>
+      ) : (
+        <Center h="300px">
+          <p>Alocação não encontrada.</p>
+        </Center>
       )}
     </Page>
   )
