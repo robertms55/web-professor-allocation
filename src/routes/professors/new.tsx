@@ -1,12 +1,20 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Button, FormControl, FormLabel, Input, Select, VStack, useToast } from '@chakra-ui/react'
+import {
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  VStack,
+  useToast,
+  Spinner,
+} from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import Page from '@/components/page'
 
 export const Route = createFileRoute('/professors/new')({
   component: RouteComponent,
 })
-
 
 function formatCPF(value: string) {
   return value
@@ -21,6 +29,7 @@ function RouteComponent() {
   const [cpf, setCpf] = useState('')
   const [departmentId, setDepartmentId] = useState<number | string>('')
   const [departments, setDepartments] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -45,9 +54,11 @@ function RouteComponent() {
       return
     }
 
+    setIsLoading(true)
+
     const professorData = {
       name,
-      cpf: cpf.replace(/\D/g, ''), // Envia só os números
+      cpf: cpf.replace(/\D/g, ''),
       departmentId: parseInt(departmentId.toString()),
     }
 
@@ -66,30 +77,30 @@ function RouteComponent() {
             isClosable: true,
             position: 'top-right',
           })
-          navigate({ to: '/professors' })
+
+    
+          localStorage.removeItem('professors')
+          navigate({ to: '/professors', replace: true })
+          setTimeout(() => {
+            window.location.reload()
+          }, 100) 
         } else {
-         
-          toast({
-            title: 'Erro ao cadastrar professor!',
-            description: 'O CPF informado já está em uso.',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-            position: 'top-right',
-          })
+          throw new Error('Erro ao cadastrar professor')
         }
       })
       .catch((error) => {
         console.error('Erro ao adicionar professor:', error)
         toast({
           title: 'Erro!',
-          description: 'Não foi possível adicionar o professor. Tente novamente.',
+          description:
+            'Não foi possível adicionar o professor. O CPF pode já estar em uso.',
           status: 'error',
           duration: 3000,
           isClosable: true,
           position: 'top-right',
         })
       })
+      .finally(() => setIsLoading(false))
   }
 
   return (
@@ -127,10 +138,15 @@ function RouteComponent() {
               ))}
             </Select>
           </FormControl>
-          <Button type="submit" colorScheme="blue">
-            Salvar
+          <Button type="submit" colorScheme="blue" isDisabled={isLoading}>
+            {isLoading ? <Spinner size="sm" mr={2} /> : null}
+            {isLoading ? 'Salvando...' : 'Salvar'}
           </Button>
-          <Button variant="outline" onClick={() => navigate({ to: '/professors' })}>
+          <Button
+            variant="outline"
+            onClick={() => navigate({ to: '/professors' })}
+            isDisabled={isLoading}
+          >
             Voltar
           </Button>
         </VStack>

@@ -31,7 +31,7 @@ type Department = {
 }
 
 const CACHE_KEY = 'departments_cache'
-const CACHE_DURATION = 1000 * 60 * 5 // 5 minutos
+
 
 function RouteComponent() {
   const [departments, setDepartments] = useState<Department[]>([])
@@ -48,7 +48,10 @@ function RouteComponent() {
   const cancelRef = useRef<HTMLButtonElement>(null)
   const toast = useToast()
 
+
   useEffect(() => {
+    // Invalida cache sempre que acessar a página
+    localStorage.removeItem(CACHE_KEY)
     fetchDepartments()
   }, [])
 
@@ -57,29 +60,19 @@ function RouteComponent() {
   }, [departments])
 
   const fetchDepartments = () => {
-    // Tentar pegar do cache primeiro
-    const cached = localStorage.getItem(CACHE_KEY)
-    if (cached) {
-      try {
-        const { data, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          setDepartments(data)
-          setIsLoading(false)
-          return
-        }
-      } catch {
-        // Se cache estiver inválido, ignora
-      }
-    }
 
-    // Se não tem cache válido, busca da API
     setIsLoading(true)
-    fetch('https://professor-allocation-raposa-2.onrender.com/departments')
+    fetch('https://professor-allocation-raposa-2.onrender.com/departments', {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    })
       .then((response) => response.json())
       .then((result) => {
         const sortedDepartments = result.sort((a: { id: number }, b: { id: number }) => a.id - b.id)
         setDepartments(sortedDepartments)
-        // Salvar no cache
+       
         localStorage.setItem(CACHE_KEY, JSON.stringify({ data: sortedDepartments, timestamp: Date.now() }))
       })
       .catch((error) => console.error('Erro ao buscar departamentos:', error))
@@ -94,7 +87,13 @@ function RouteComponent() {
   const confirmDelete = () => {
     if (selectedId === null) return
     setIsDeleting(true)
-    fetch(`https://professor-allocation-raposa-2.onrender.com/departments/${selectedId}`, { method: 'DELETE' })
+    fetch(`https://professor-allocation-raposa-2.onrender.com/departments/${selectedId}`, { 
+      method: 'DELETE',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    })
       .then((response) => {
         if (response.ok) {
           // Limpar cache pois dados mudaram

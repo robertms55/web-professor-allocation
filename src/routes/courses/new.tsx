@@ -13,7 +13,7 @@ function RouteComponent() {
   const navigate = useNavigate()
   const toast = useToast()
 
-  // Limpa o formulário ao montar o componente
+ 
   useEffect(() => {
     setName('')
   }, [])
@@ -51,7 +51,7 @@ function RouteComponent() {
             position: 'top-right',
           })
           
-          // Remove o cache dos cursos - mesma lógica da alocação
+          // Remove o cache dos cursos 
           localStorage.removeItem('coursesCache')
           navigate({ to: '/courses' })
         } else {

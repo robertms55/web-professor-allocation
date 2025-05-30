@@ -38,6 +38,7 @@ function RouteComponent() {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -48,7 +49,7 @@ function RouteComponent() {
   const toast = useToast()
 
   useEffect(() => {
-    // Tenta carregar do localStorage primeiro
+    // Tenta carregar do cache local primeiro
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY)
     if (cached) {
       try {
@@ -94,6 +95,8 @@ function RouteComponent() {
 
   const confirmDelete = () => {
     if (selectedId === null) return
+    
+    setIsDeleting(true)
     fetch(`https://professor-allocation-raposa-2.onrender.com/Courses/${selectedId}`, { method: 'DELETE' })
       .then((response) => {
         if (response.ok) {
@@ -119,7 +122,6 @@ function RouteComponent() {
             position: 'top-right',
           })
         }
-        onClose()
       })
       .catch((error) => {
         console.error('Erro ao deletar curso:', error)
@@ -131,6 +133,9 @@ function RouteComponent() {
           isClosable: true,
           position: 'top-right',
         })
+      })
+      .finally(() => {
+        setIsDeleting(false)
         onClose()
       })
   }
@@ -244,10 +249,20 @@ function RouteComponent() {
               Você tem certeza que deseja excluir este curso? Esta ação não poderá ser desfeita.
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
+              <Button 
+                ref={cancelRef} 
+                onClick={onClose}
+                isDisabled={isDeleting}
+              >
                 Cancelar
               </Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
+              <Button 
+                colorScheme="red" 
+                onClick={confirmDelete} 
+                ml={3}
+                isLoading={isDeleting}
+                loadingText="Deletando..."
+              >
                 Deletar
               </Button>
             </AlertDialogFooter>

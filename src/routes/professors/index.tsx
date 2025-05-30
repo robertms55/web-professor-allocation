@@ -35,7 +35,6 @@ type Professor = {
   }
 }
 
-
 function formatCPF(cpf: string) {
   cpf = cpf.replace(/\D/g, '')
   if (cpf.length === 11) {
@@ -45,13 +44,13 @@ function formatCPF(cpf: string) {
 }
 
 const CACHE_KEY = 'professorsCache'
-const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutos
+const CACHE_EXPIRATION_MS = 5 * 60 * 1000
 
 function RouteComponent() {
   const [professors, setProfessors] = useState<Professor[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-
+  const [isDeleting, setIsDeleting] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const itemsPerPage = 10
@@ -71,7 +70,6 @@ function RouteComponent() {
   const fetchProfessors = () => {
     setIsLoading(true)
 
-    // Tenta ler cache
     const cached = localStorage.getItem(CACHE_KEY)
     if (cached) {
       try {
@@ -79,13 +77,11 @@ function RouteComponent() {
         const { data, timestamp } = parsedCache
         const now = Date.now()
 
-        // Verifica se cache ainda é válido
         if (now - timestamp < CACHE_EXPIRATION_MS) {
           setProfessors(data)
           setIsLoading(false)
           return
         } else {
-          // Cache expirou, remove
           localStorage.removeItem(CACHE_KEY)
         }
       } catch (e) {
@@ -94,16 +90,12 @@ function RouteComponent() {
       }
     }
 
-   
     fetch('https://professor-allocation-raposa-2.onrender.com/professors')
       .then((response) => response.json())
       .then((result) => {
         const sortedProfessors = result.sort((a: Professor, b: Professor) => a.id - b.id)
         setProfessors(sortedProfessors)
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: sortedProfessors, timestamp: Date.now() }),
-        )
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: sortedProfessors, timestamp: Date.now() }))
         setIsLoading(false)
       })
       .catch((error) => {
@@ -119,10 +111,15 @@ function RouteComponent() {
 
   const confirmDelete = () => {
     if (selectedId === null) return
-    fetch(`https://professor-allocation-raposa-2.onrender.com/professors/${selectedId}`, { method: 'DELETE' })
+
+    setIsDeleting(true)
+    fetch(`https://professor-allocation-raposa-2.onrender.com/professors/${selectedId}`, {
+      method: 'DELETE',
+    })
       .then((response) => {
         if (response.ok) {
-          fetchProfessors() // Atualiza lista (e cache)
+          localStorage.removeItem(CACHE_KEY)
+          fetchProfessors()
           toast({
             title: 'Professor excluído!',
             description: 'O professor foi removido com sucesso.',
@@ -141,7 +138,6 @@ function RouteComponent() {
             position: 'top-right',
           })
         }
-        onClose()
       })
       .catch((error) => {
         console.error('Erro ao deletar professor:', error)
@@ -153,6 +149,9 @@ function RouteComponent() {
           isClosable: true,
           position: 'top-right',
         })
+      })
+      .finally(() => {
+        setIsDeleting(false)
         onClose()
       })
   }
@@ -203,7 +202,8 @@ function RouteComponent() {
                 {
                   label: 'Departamento',
                   name: 'department',
-                  render: (_: any, row: Professor) => row.department?.name || 'Sem Departamento',
+                  render: (_: any, row: Professor) =>
+                    row.department?.name || 'Sem Departamento',
                 },
                 {
                   label: 'Ações',
@@ -235,7 +235,8 @@ function RouteComponent() {
             <Flex justifyContent="space-between" alignItems="center" mt={4}>
               <Box>
                 <Text fontSize="sm">
-                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, professors.length)} de {professors.length} professores
+                  Mostrando {(currentPage - 1) * itemsPerPage + 1} a{' '}
+                  {Math.min(currentPage * itemsPerPage, professors.length)} de {professors.length} professores
                 </Text>
               </Box>
               <HStack>
@@ -262,11 +263,7 @@ function RouteComponent() {
         )}
       </Page>
 
-      <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onClose}
-      >
+      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader>Confirmar Exclusão</AlertDialogHeader>
@@ -277,7 +274,7 @@ function RouteComponent() {
               <Button ref={cancelRef} onClick={onClose}>
                 Cancelar
               </Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
+              <Button colorScheme="red" onClick={confirmDelete} ml={3} isLoading={isDeleting}>
                 Deletar
               </Button>
             </AlertDialogFooter>
