@@ -77,7 +77,7 @@ function RouteComponent() {
     fetch('https://professor-allocation-raposa-2.onrender.com/departments')
       .then((response) => response.json())
       .then((result) => {
-        const sortedDepartments = result.sort((a, b) => a.id - b.id)
+        const sortedDepartments = result.sort((a: { id: number }, b: { id: number }) => a.id - b.id)
         setDepartments(sortedDepartments)
         // Salvar no cache
         localStorage.setItem(CACHE_KEY, JSON.stringify({ data: sortedDepartments, timestamp: Date.now() }))
@@ -176,7 +176,7 @@ function RouteComponent() {
                 {
                   label: 'Ações',
                   name: 'options',
-                  width: '1%',
+                 
                   render: (_value: any, row: Department) => (
                     <HStack justify="flex-end">
                       <IconButton

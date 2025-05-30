@@ -84,7 +84,7 @@ function RouteComponent() {
     fetch('https://professor-allocation-raposa-2.onrender.com/allocations')
       .then((response) => response.json())
       .then((result) => {
-        const sortedAllocations = result.sort((a, b) => a.id - b.id)
+        const sortedAllocations = result.sort((a: { id: number }, b: { id: number }) => a.id - b.id)
         localStorage.setItem('allocationsCache', JSON.stringify(sortedAllocations))
         setAllocations(sortedAllocations)
       })

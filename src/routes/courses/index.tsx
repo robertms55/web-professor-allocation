@@ -31,7 +31,8 @@ type Course = {
   name: string
 }
 
-const LOCAL_STORAGE_KEY = 'cachedCourses'
+
+const LOCAL_STORAGE_KEY = 'coursesCache'
 
 function RouteComponent() {
   const [courses, setCourses] = useState<Course[]>([])
@@ -55,7 +56,6 @@ function RouteComponent() {
         setCourses(parsed)
         setIsLoading(false)
       } catch {
-    
         fetchCourses()
       }
     } else {
@@ -66,7 +66,9 @@ function RouteComponent() {
   useEffect(() => {
     setTotalPages(Math.ceil(courses.length / itemsPerPage))
     // Atualiza cache sempre que courses mudar
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(courses))
+    if (courses.length > 0) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(courses))
+    }
   }, [courses])
 
   const fetchCourses = () => {
@@ -74,7 +76,7 @@ function RouteComponent() {
     fetch('https://professor-allocation-raposa-2.onrender.com/Courses')
       .then((response) => response.json())
       .then((result) => {
-        const sortedCourses = result.sort((a, b) => a.id - b.id)
+        const sortedCourses = result.sort((a: { id: number }, b: { id: number }) => a.id - b.id)
         setCourses(sortedCourses)
         setIsLoading(false)
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sortedCourses))
@@ -95,10 +97,10 @@ function RouteComponent() {
     fetch(`https://professor-allocation-raposa-2.onrender.com/Courses/${selectedId}`, { method: 'DELETE' })
       .then((response) => {
         if (response.ok) {
-         
           const updatedCourses = courses.filter((course) => course.id !== selectedId)
           setCourses(updatedCourses)
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedCourses))
+          // Remove o cache para forçar reload na próxima visita 
+          localStorage.removeItem(LOCAL_STORAGE_KEY)
           toast({
             title: 'Curso excluído!',
             description: 'O curso foi removido com sucesso.',
@@ -174,7 +176,6 @@ function RouteComponent() {
                 {
                   label: 'Ações',
                   name: 'options',
-                  width: '1%',
                   render: (_value: any, row: Course) => (
                     <HStack justify="flex-end">
                       <IconButton
@@ -191,6 +192,7 @@ function RouteComponent() {
                         aria-label="Deletar"
                         colorScheme="red"
                         onClick={() => handleDelete(row.id)}
+                      
                       />
                     </HStack>
                   ),

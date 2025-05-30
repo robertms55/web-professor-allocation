@@ -16,11 +16,11 @@ import {
 } from '@chakra-ui/react'
 
 import { Link } from '@tanstack/react-router'
-
+import type { ReactNode } from 'react'
 import { ChevronDownIcon, CloseIcon, HamburgerIcon } from '@chakra-ui/icons'
 
 interface HeaderProps {
-  title: string
+  title: ReactNode
 }
 
 export default function Header(props: HeaderProps) {

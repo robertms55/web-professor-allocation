@@ -1,4 +1,4 @@
-import { Box, Container, Heading, InputRightElement } from '@chakra-ui/react'
+import { Box, Container, Heading } from '@chakra-ui/react'
 
 import type { ReactNode } from 'react'
 

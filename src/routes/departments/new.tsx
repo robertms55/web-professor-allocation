@@ -11,7 +11,7 @@ function NewDepartmentPage() {
   const [name, setName] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault()
 
     fetch('https://professor-allocation-raposa-2.onrender.com/departments', {
@@ -33,7 +33,7 @@ function NewDepartmentPage() {
   }
 
   return (
-    <Page title="Novo Departamento">
+    <Page title="Novo Departamento" rightElement={null}>
       <form onSubmit={handleSubmit}>
         <VStack spacing={4} align="stretch">
           <FormControl isRequired>

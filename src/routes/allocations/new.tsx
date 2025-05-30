@@ -111,6 +111,7 @@ function RouteComponent() {
             isClosable: true,
             position: 'top-right',
           })
+          localStorage.removeItem('allocationsCache')
           navigate({ to: '/allocations' })
         } else {
           return res.json().then((err) => {

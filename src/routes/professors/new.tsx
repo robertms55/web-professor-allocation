@@ -93,7 +93,7 @@ function RouteComponent() {
   }
 
   return (
-    <Page title="Novo Professor">
+    <Page title="Novo Professor" rightElement={null}>
       <form onSubmit={handleSubmit}>
         <VStack spacing={4} align="stretch">
           <FormControl isRequired>
